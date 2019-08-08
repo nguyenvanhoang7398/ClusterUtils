@@ -56,15 +56,14 @@ def watch_tf_gpu():
     return "".join(raw_tf_log_lines[start: end+1])
 
 
-def watch(email_service):
+def watch():
     tf_gpu_content = watch_tf_gpu()
-    email_service.send(constants.WATCHER_EMAIL_SUBJECT, tf_gpu_content=tf_gpu_content)
+    watcher_email_service = EmailService()
+    watcher_email_service.send(constants.WATCHER_EMAIL_SUBJECT, tf_gpu_content=tf_gpu_content)
 
 
 if __name__ == "__main__":
-    watcher_email_service = EmailService()
-    schedule.every(constants.WATCHER_PERIOD_MINUTE).minutes.do(watch, watcher_email_service)
-
+    schedule.every(constants.WATCHER_PERIOD_MINUTE).minutes.do(watch)
     while True:
         schedule.run_pending()
         time.sleep(1)
