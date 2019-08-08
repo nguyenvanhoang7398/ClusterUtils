@@ -1,0 +1,12 @@
+This is a system-generated email from Watcher
+----------------------------------------
+Timestamp: ${TIMESTAMP}
+----------------------------------------
+Host: ${HOST}
+----------------------------------------
+Tensorflow GPU:
+${TENSORFLOW_GPU}
+----------------------------------------
+
+Best regards,
+Watcher
