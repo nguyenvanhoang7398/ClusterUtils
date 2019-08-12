@@ -1,63 +1,68 @@
 import constants
-import datetime
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+from cores import EmailService, SshService
+from prettytable import PrettyTable
+import re
 import schedule
-import smtplib
-import socket
-from string import Template
 from subprocess import Popen, PIPE
 import time
 
 
-class EmailService(object):
-    def __init__(self):
-        self.email_service = smtplib.SMTP(host=constants.SMTP_HOST, port=constants.SMTP_PORT)
-        self.email_service.starttls()
-        self.email_service.login(constants.NOTIFICATION_EMAIL, constants.NOTIFICATION_PASSWORD)
-        self.email_template = self.read_template(constants.EMAIL_TEMPLATE)
+def watch_gpu_stats():
+    ssh_service = SshService()
 
-    @staticmethod
-    def read_template(filename):
-        with open(filename, 'r', encoding='utf-8') as template_file:
-            template_file_content = template_file.read()
-        return Template(template_file_content)
+    header = ["Host name"]
+    for gpu_num in range(constants.MAX_GPUS):
+        header.append("GPU #{} - free".format(gpu_num))
+        header.append("GPU #{} - total".format(gpu_num))
 
-    def send(self, subject, tf_gpu_content):
-        message = MIMEMultipart()
+    table = PrettyTable(header)
 
-        current_time = datetime.datetime.now()
+    for host in constants.HOSTS:
+        raw_tf_log_lines = ssh_service.execute(host, "python {}".format(constants.CHECK_GPU_SCRIPT))
 
-        email_content = self.email_template.substitute(TIMESTAMP=str(current_time), HOST=str(socket.gethostname()),
-                                                       TENSORFLOW_GPU=str(tf_gpu_content))
-        print(email_content)
+        # parse tf log
+        start, end = 0, len(raw_tf_log_lines)
+        for i, line in enumerate(raw_tf_log_lines):
+            if constants.TF_LOG_START_MARKER in line:
+                start = i
+            if constants.TF_LOG_END_MARKER in line:
+                end = i
+        gpu_logs = raw_tf_log_lines[start: end+1]
+        gpu_stats = parse_gpu_stats(gpu_logs)
+        table_row = [host]
+        for gpu_num in range(constants.MAX_GPUS):
+            if gpu_num < len(gpu_stats):
+                table_row.append(gpu_stats[gpu_num]["free_memory"])
+                table_row.append(gpu_stats[gpu_num]["total_memory"])
+            else:
+                table_row.append("")
+                table_row.append("")
+            table.add_row(table_row)
 
-        message['From'] = constants.NOTIFICATION_EMAIL
-        message['To'] = constants.RECEIVING_EMAIL
-        message['Subject'] = subject
-        message.attach(MIMEText(email_content, 'plain'))
-        self.email_service.send_message(message)
-        del message
+    return str(table)
 
 
-def watch_tf_gpu():
-    check_gpu_result = Popen(["python", constants.CHECK_GPU_SCRIPT], shell=False, stderr=PIPE, bufsize=1)
-    raw_tf_log_lines = []
-    for line in iter(check_gpu_result.stderr.readline, b''):
-        raw_tf_log_lines.append(line.decode("utf-8"))
-
-    # parse tf log
-    start, end = 0, len(raw_tf_log_lines)
-    for i, line in enumerate(raw_tf_log_lines):
-        if constants.TF_LOG_START_MARKER in line:
-            start = i
-        if constants.TF_LOG_END_MARKER in line:
-            end = i
-    return "".join(raw_tf_log_lines[start: end+1])
+def parse_gpu_stats(gpu_logs):
+    gpu_stats = []
+    parsed_gpu_device = None
+    for line in gpu_logs:
+        captured_device_group = re.search(constants.GPU_DEVICE_PATTERN, line)
+        if captured_device_group is not None:
+            parsed_gpu_device = captured_device_group.group(2)
+        captured_memory_group = re.search(constants.GPU_MEMORY_PATTERN, line)
+        if captured_memory_group is not None:
+            assert parsed_gpu_device is not None, "No device is being parsed"
+            free_memory, total_memory = captured_memory_group.group(2), captured_memory_group.group(1)
+            gpu_stats.append({
+                "device_number": parsed_gpu_device,
+                "free_memory": free_memory,
+                "total_memory": total_memory
+            })
+    return gpu_stats
 
 
 def watch():
-    tf_gpu_content = watch_tf_gpu()
+    tf_gpu_content = watch_gpu_stats()
     watcher_email_service = EmailService()
     watcher_email_service.send(constants.WATCHER_EMAIL_SUBJECT, tf_gpu_content=tf_gpu_content)
 

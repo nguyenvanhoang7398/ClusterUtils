@@ -1,0 +1,9 @@
+{
+  "jobs": [
+    {
+      "type": "command",
+      "content": "python ",
+      "resource": "gpu"
+    }
+  ]
+}
