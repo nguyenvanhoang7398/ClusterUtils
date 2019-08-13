@@ -54,6 +54,7 @@ class TaskManager(object):
     def _tabular_scheduled_task(command, resource, log_path, host):
         table = PrettyTable(["Command", "Resource", "Log", "Host"])
         table.add_row([command, resource, log_path, host])
+        print(table)
         return str(table)
 
     def _map_host_with_gpu_tasks(self, pending_tasks):

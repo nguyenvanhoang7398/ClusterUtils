@@ -27,7 +27,7 @@ class EmailService(object):
         current_time = datetime.datetime.now()
 
         email_content = self.email_template.substitute(TIMESTAMP=str(current_time),
-                                                       CONTENT=str(content))
+                                                       MESSAGE_CONTENT=str(content))
         print(email_content)
 
         message['From'] = constants.NOTIFICATION_EMAIL
