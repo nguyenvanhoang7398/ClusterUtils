@@ -47,10 +47,12 @@ class TaskManager(object):
         logging.info("Host gpu stats " + str(host_gpu_stats))
         num_allocated_tasks = 0
         for host, gpu_stats in host_gpu_stats.items():
+            if num_allocated_tasks >= len(pending_tasks):
+                break
             if host not in host_gpu_task_map:
                 available_gpu_num = self.check_free_gpu(gpu_stats, constants.GPU_THRESHOLD_GIB)
                 logging.info("Device {} is available in {}".format(available_gpu_num, host))
-                if available_gpu_num >= 0:
+                if int(available_gpu_num) >= 0:
                     host_gpu_task_map[host] = (available_gpu_num, pending_tasks[num_allocated_tasks])
                     num_allocated_tasks += 1
         return host_gpu_task_map
