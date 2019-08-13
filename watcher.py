@@ -18,7 +18,7 @@ def watch_gpu_stats():
     table = PrettyTable(header)
 
     for host in constants.HOSTS:
-        raw_tf_log_lines = ssh_service.execute(host, "python {}".format(constants.CHECK_GPU_SCRIPT))
+        raw_tf_log_lines = ssh_service.execute(host, "{} {}".format(constants.PYTHON_PATH, constants.CHECK_GPU_SCRIPT))
 
         # parse tf log
         start, end = 0, len(raw_tf_log_lines)
@@ -37,7 +37,7 @@ def watch_gpu_stats():
             else:
                 table_row.append("")
                 table_row.append("")
-            table.add_row(table_row)
+        table.add_row(table_row)
 
     return str(table)
 
@@ -49,6 +49,7 @@ def parse_gpu_stats(gpu_logs):
         captured_device_group = re.search(constants.GPU_DEVICE_PATTERN, line)
         if captured_device_group is not None:
             parsed_gpu_device = captured_device_group.group(2)
+
         captured_memory_group = re.search(constants.GPU_MEMORY_PATTERN, line)
         if captured_memory_group is not None:
             assert parsed_gpu_device is not None, "No device is being parsed"
