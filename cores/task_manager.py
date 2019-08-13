@@ -4,6 +4,7 @@ import os
 import utils as utils
 logging.basicConfig(level=logging.INFO)
 
+
 class TaskManager(object):
     def __init__(self, resource_root, hosts, ssh_service, email_service, watcher):
         self.resource_root = resource_root
@@ -31,8 +32,10 @@ class TaskManager(object):
         logging.info("Host gpu task map " + str(host_gpu_task_map))
         for host, (gpu_num, task_id) in host_gpu_task_map.items():
             task = pending_tasks[task_id]
-            self.ssh_service.execute(host, task["command"])
-            logging.info("Executed task with id {}".format(task_id))
+            command, log_path = task["command"], task["log_path"] \
+                if "log_path" in task and len(task["log_path"]) > 0 else None
+            log_path = self.ssh_service.async_execute(host, command, log_path)
+            logging.info("Executed task with id {}, writing to log at path {}".format(task_id, log_path))
             del next_pending_tasks[task_id]
 
         next_pending_task_dict = {

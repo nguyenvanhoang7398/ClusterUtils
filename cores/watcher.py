@@ -6,6 +6,7 @@ import re
 
 logging.basicConfig(level=logging.DEBUG)
 
+
 class Watcher(object):
     def __init__(self, ssh_service, email_service):
         self.ssh_service = ssh_service
