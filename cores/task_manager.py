@@ -1,6 +1,7 @@
 import constants
 import logging
 import os
+from prettytable import PrettyTable
 import utils as utils
 logging.basicConfig(level=logging.INFO)
 
@@ -27,22 +28,33 @@ class TaskManager(object):
                 logging.warning("Unrecognized resource '{}'".format(task_resource))
 
         logging.info("Pending gpu tasks " + str(pending_gpu_tasks))
-        next_pending_tasks = dict(pending_tasks)
-        host_gpu_task_map = self._map_host_with_gpu_tasks(pending_gpu_tasks)
-        logging.info("Host gpu task map " + str(host_gpu_task_map))
-        for host, (gpu_num, task_id) in host_gpu_task_map.items():
-            task = pending_tasks[task_id]
-            command, log_path = task["command"], task["log_path"] \
-                if "log_path" in task and len(task["log_path"]) > 0 else None
-            log_path = self.ssh_service.async_execute(host, command, log_path)
-            logging.info("Executed task with id {}, writing to log at path {}".format(task_id, log_path))
-            del next_pending_tasks[task_id]
 
-        next_pending_task_dict = {
-            "tasks": next_pending_tasks
-        }
+        if len(pending_gpu_tasks) > 0:
+            next_pending_tasks = dict(pending_tasks)
+            host_gpu_task_map = self._map_host_with_gpu_tasks(pending_gpu_tasks)
+            logging.info("Host gpu task map " + str(host_gpu_task_map))
+            for host, (gpu_num, task_id) in host_gpu_task_map.items():
+                task = pending_tasks[task_id]
+                command, log_path = task["command"], task["log_path"] \
+                    if "log_path" in task and len(task["log_path"]) > 0 else None
+                log_path = self.ssh_service.async_execute(host, command, log_path)
+                if log_path is not None:
+                    logging.info("Executed task with id {}, writing to log at path {}".format(task_id, log_path))
+                    scheduled_task_table = self._tabular_scheduled_task(command, "gpu", log_path, host)
+                    self.email_service.send(constants.SCHEDULING_EMAIL_SUBJECT, content=scheduled_task_table)
+                    del next_pending_tasks[task_id]
 
-        utils.write_json(next_pending_task_dict, pending_task_path)
+            next_pending_task_dict = {
+                "tasks": next_pending_tasks
+            }
+
+            utils.write_json(next_pending_task_dict, pending_task_path)
+
+    @staticmethod
+    def _tabular_scheduled_task(command, resource, log_path, host):
+        table = PrettyTable(["Command", "Resource", "Log", "Host"])
+        table.add_row([command, resource, log_path, host])
+        return str(table)
 
     def _map_host_with_gpu_tasks(self, pending_tasks):
         host_gpu_task_map = {}

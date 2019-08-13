@@ -1,1 +1,12 @@
-{"tasks": {"0": {"command": "/home/v/vanhoang/anaconda3/envs/py366/bin/python /home/v/vanhoang/FYP/ClusterUtils/scripts/check_gpu.py", "resource": "gpu"}}}
+{
+  "tasks": {
+    "0": {
+      "command": "/home/v/vanhoang/anaconda3/envs/py366/bin/python /home/v/vanhoang/FYP/ClusterUtils/scripts/long_task.py",
+      "resource": "gpu"
+    },
+    "1": {
+      "command": "/home/v/vanhoang/anaconda3/envs/py366/bin/python /home/v/vanhoang/FYP/ClusterUtils/scripts/long_task.py",
+      "resource": "gpu"
+    }
+  }
+}

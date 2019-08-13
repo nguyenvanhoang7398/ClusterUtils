@@ -8,3 +8,4 @@ SCHEDULER_TMUX_NAME = "fyp"
 GPU_DEVICE_PATTERN = "^(.+) Found device (\\d) with properties"
 # totalMemory: 11.75GiB freeMemory: 8.58GiB
 GPU_MEMORY_PATTERN = "^totalMemory: (\\w.+) freeMemory: (\\w.+)\\r\\n"
+SCHEDULING_EMAIL_SUBJECT = "Task successfully scheduled"
