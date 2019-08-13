@@ -7,7 +7,7 @@ def read_json(path):
 
 
 def write_json(content, path):
-    json.dump(content, open(path, 'wb'))
+    json.dump(content, open(path, 'w'))
 
 
 def write_csv(content, header, path, delimiter=","):

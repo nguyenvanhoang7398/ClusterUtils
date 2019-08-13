@@ -1,7 +1,10 @@
 import constants
+import logging
 from prettytable import PrettyTable
 import re
 
+
+logging.basicConfig(level=logging.DEBUG)
 
 class Watcher(object):
     def __init__(self, ssh_service, email_service):
@@ -17,10 +20,10 @@ class Watcher(object):
         host_gpu_stats = {}
 
         for host in constants.HOSTS:
-            raw_tf_log_lines = self.ssh_service.execute(host,
-                                                        "{} {}".format(constants.PYTHON_PATH,
-                                                                       constants.CHECK_GPU_SCRIPT))
-
+            gpu_stats_command = "{} {}".format(constants.PYTHON_PATH, constants.CHECK_GPU_SCRIPT)
+            logging.info("Gpu stats command {}, host {}".format(gpu_stats_command, host))
+            raw_tf_log_lines = self.ssh_service.execute(host, gpu_stats_command)
+            logging.info("Raw tf log " + str(raw_tf_log_lines))
             # parse tf log
             start, end = 0, len(raw_tf_log_lines)
             for i, line in enumerate(raw_tf_log_lines):
