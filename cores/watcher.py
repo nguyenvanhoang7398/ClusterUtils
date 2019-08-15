@@ -23,9 +23,7 @@ class Watcher(object):
         end_pattern = re.compile(constants.TF_LOG_END_MARKER)
 
         for host in constants.HOSTS:
-            logging.info("Gpu stats command {}, host {}".format(constants.GPU_STATS_COMMAND, host))
-            raw_tf_log_lines = self.ssh_service.execute(host, constants.GPU_STATS_COMMAND)
-            logging.info("Raw tf log " + str(raw_tf_log_lines))
+            raw_tf_log_lines = self.ssh_service.execute(host, constants.GPU_STATS_COMMAND)   
             # parse tf log
             start, end = 0, len(raw_tf_log_lines)
             for i, line in enumerate(raw_tf_log_lines):
