@@ -73,7 +73,8 @@ class Watcher(object):
             captured_memory_group = re.search(constants.GPU_MEMORY_PATTERN, line)
             if captured_memory_group is not None:
                 assert parsed_gpu_device is not None, "No device is being parsed"
-                free_memory, total_memory = captured_memory_group.group(2), captured_memory_group.group(1)
+                used_memory, total_memory = captured_memory_group.group(2), captured_memory_group.group(3)
+                free_memory = str(int(total_memory[:-3]) - int(used_memory[:-3])) + "MiB"
                 gpu_stats.append({
                     "device_number": parsed_gpu_device,
                     "free_memory": free_memory,

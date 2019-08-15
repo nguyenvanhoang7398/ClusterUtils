@@ -23,7 +23,7 @@ class SshService(object):
             self.client.connect(host)
             transport = self.client.get_transport()
             channel = transport.open_session()
-            command_with_log = command + " > {}".format(log_path)
+            command_with_log = "nohup " +  command + " & > {}".format(log_path)
             channel.exec_command(command_with_log)
             return log_path
         except paramiko.SSHException as e:
