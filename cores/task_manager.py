@@ -37,7 +37,8 @@ class TaskManager(object):
                 task = pending_tasks[task_id]
                 command, log_path = task["command"], task["log_path"] \
                     if "log_path" in task and len(task["log_path"]) > 0 else None
-                log_path = self.ssh_service.async_execute(host, command, log_path)
+                working_dir = task["working_dir"] if "working_dir" in task else "/home/v/vanhoang"
+                log_path = self.ssh_service.async_execute(host, command, log_path, working_dir)
                 if log_path is not None:
                     logging.info("Executed task with id {}, writing to log at path {}".format(task_id, log_path))
                     scheduled_task_table = self._tabular_scheduled_task(command, "gpu", log_path, host)

@@ -16,15 +16,17 @@ class SshService(object):
             print(e)
         return []
 
-    def async_execute(self, host, command, log_path=None):
+    def async_execute(self, host, command, log_path=None, working_dir="/home/v/vanhoang"):
+        cmd_template = "cd {}; " \
+                       "nohup {} >> {} 2>&1 &"
         if log_path is None:
             log_path = "/tmp/scheduler_task_{}".format(str(uuid.uuid1()))
         try:
             self.client.connect(host)
             transport = self.client.get_transport()
             channel = transport.open_session()
-            command_with_log = "nohup " +  command + " & > {}".format(log_path)
-            channel.exec_command(command_with_log)
+            command_full = cmd_template.format(working_dir, command, log_path)
+            channel.exec_command(command_full)
             return log_path
         except paramiko.SSHException as e:
             print(e)
