@@ -4,7 +4,7 @@ from prettytable import PrettyTable
 import re
 
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 class Watcher(object):
@@ -19,21 +19,22 @@ class Watcher(object):
 
     def watch_gpu_stats(self):
         host_gpu_stats = {}
+        start_pattern = re.compile(constants.TF_LOG_START_MARKER)
+        end_pattern = re.compile(constants.TF_LOG_END_MARKER)
 
         for host in constants.HOSTS:
-            gpu_stats_command = "{} {}".format(constants.PYTHON_PATH, constants.CHECK_GPU_SCRIPT)
-            logging.info("Gpu stats command {}, host {}".format(gpu_stats_command, host))
-            raw_tf_log_lines = self.ssh_service.execute(host, gpu_stats_command)
+            logging.info("Gpu stats command {}, host {}".format(constants.GPU_STATS_COMMAND, host))
+            raw_tf_log_lines = self.ssh_service.execute(host, constants.GPU_STATS_COMMAND)
             logging.info("Raw tf log " + str(raw_tf_log_lines))
             # parse tf log
             start, end = 0, len(raw_tf_log_lines)
             for i, line in enumerate(raw_tf_log_lines):
-                if constants.TF_LOG_START_MARKER in line:
+                if start_pattern.match(line):
                     start = i
-                if constants.TF_LOG_END_MARKER in line:
+                if end_pattern.match(line):
                     end = i
-            gpu_logs = raw_tf_log_lines[start: end + 1]
-            host_gpu_stats[host] = self._parse_gpu_stats(gpu_logs)
+            gpu_logs = raw_tf_log_lines[start: end]
+            host_gpu_stats[host] = self.parse_gpu_stats(gpu_logs)
 
         return host_gpu_stats
 
@@ -61,13 +62,13 @@ class Watcher(object):
         return str(table)
 
     @staticmethod
-    def _parse_gpu_stats(gpu_logs):
+    def parse_gpu_stats(gpu_logs):
         gpu_stats = []
         parsed_gpu_device = None
         for line in gpu_logs:
             captured_device_group = re.search(constants.GPU_DEVICE_PATTERN, line)
             if captured_device_group is not None:
-                parsed_gpu_device = captured_device_group.group(2)
+                parsed_gpu_device = captured_device_group.group(1)
 
             captured_memory_group = re.search(constants.GPU_MEMORY_PATTERN, line)
             if captured_memory_group is not None:

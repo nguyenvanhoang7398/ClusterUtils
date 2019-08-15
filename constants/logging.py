@@ -1,2 +1,3 @@
-TF_LOG_START_MARKER = "Found device 0 with properties"
-TF_LOG_END_MARKER = "Creating TensorFlow device (/gpu:0)"
+TF_LOG_START_MARKER = "^\\|=+\\+=+\\+=+\\|"
+TF_LOG_END_MARKER = "\\| Processes: +GPU Memory \\|"
+GPU_STATS_COMMAND = "nvidia-smi"

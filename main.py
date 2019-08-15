@@ -9,8 +9,8 @@ if __name__ == "__main__":
     ssh_service = SshService()
     watcher = Watcher(ssh_service, email_service)
     task_manager = TaskManager(constants.RESOURCE_ROOT, constants.HOSTS, ssh_service, email_service, watcher)
-    schedule.every(constants.WATCHER_PERIOD_MINUTE).minutes.do(watcher.watch)
-    schedule.every(constants.SCHEDULER_PERIOD_MINUTE).seconds.do(task_manager.execute_pending_tasks)
+    schedule.every(constants.WATCHER_PERIOD_MINUTE).seconds.do(watcher.watch)
+    # schedule.every(constants.SCHEDULER_PERIOD_MINUTE).seconds.do(task_manager.execute_pending_tasks)
     while True:
         schedule.run_pending()
         time.sleep(1)
